@@ -367,7 +367,13 @@ async fn load_manifest_if_present(
                 .into_bytes();
             Ok(Some(serde_json::from_slice(&bytes)?))
         },
-        Err(err) if is_missing_key(&format!("{err:?}")) => Ok(None),
+        Err(err)
+            if err
+                .as_service_error()
+                .is_some_and(|err| err.is_no_such_key()) =>
+        {
+            Ok(None)
+        },
         Err(err) => Err(AppError::S3(format!("{err:?}"))),
     }
 }
@@ -409,10 +415,6 @@ async fn delete_object_if_exists(client: &Client, bucket: &str, key: &str) -> Ap
         .await
         .map_err(|err| AppError::S3(format!("{err:?}")))?;
     Ok(())
-}
-
-fn is_missing_key(message: &str) -> bool {
-    message.contains("NoSuchKey")
 }
 
 #[cfg(test)]
