@@ -5,6 +5,8 @@
 
 ### Bug Fixes
 
+* correct Databricks dashboard table counts and add per-table bronze/silver row counts; schedule extraction every five minutes and enable continuous AUTO CDC ([#28](https://github.com/shpitdev/convex-sync-kit/pull/28)) ([dcd3ff4](https://github.com/shpitdev/convex-sync-kit/commit/dcd3ff409d9fd9c26d4251f70c132108a72fefb8))
+* improve Databricks dashboard layout with side-by-side checkpoint history and row counts and a full-width bronze/silver table map ([#30](https://github.com/shpitdev/convex-sync-kit/pull/30)) ([3cb3fe5](https://github.com/shpitdev/convex-sync-kit/commit/3cb3fe5ab28f81d3ec20f2ed2fc29faffd4096b2))
 * modernize sync dependencies and fail closed on S3 errors ([#33](https://github.com/shpitdev/convex-sync-kit/issues/33)) ([8484c8c](https://github.com/shpitdev/convex-sync-kit/commit/8484c8ca3aedb246503b3ad52031dc1b8ad8498e))
 
 ## [0.0.4](https://github.com/shpitdev/convex-sync-kit/compare/v0.0.3...v0.0.4) (2026-04-21)
