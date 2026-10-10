@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/shpitdev/convex-sync-kit/compare/v0.0.4...v0.0.5) (2026-10-10)
+
+
+### Bug Fixes
+
+* modernize sync dependencies and fail closed on S3 errors ([#33](https://github.com/shpitdev/convex-sync-kit/issues/33)) ([8484c8c](https://github.com/shpitdev/convex-sync-kit/commit/8484c8ca3aedb246503b3ad52031dc1b8ad8498e))
+
 ## [0.0.4](https://github.com/shpitdev/convex-sync-kit/compare/v0.0.3...v0.0.4) (2026-04-21)
 
 
