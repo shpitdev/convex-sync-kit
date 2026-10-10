@@ -1,9 +1,3 @@
-# Depot CI Migration
-# Source: .github/workflows/ci.yml
-#
-# Changes made:
-# - Changed GitHub runs-on labels to their Depot equivalents
-
 name: ci
 on:
   pull_request:
@@ -13,116 +7,31 @@ on:
 permissions:
   contents: read
 jobs:
-  changes:
-    name: 01-changed-paths
-    runs-on: depot-ubuntu-24.04
-    outputs:
-      inspect: ${{ steps.scope.outputs.inspect }}
-      sync: ${{ steps.scope.outputs.sync }}
+  rust:
+    name: 01-rust-workspace
+    runs-on: depot-ubuntu-latest-4
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Classify changed paths
-        id: scope
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
-            echo "inspect=true" >> "$GITHUB_OUTPUT"
-            echo "sync=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          inspect=false
-          sync=false
-          while IFS= read -r path; do
-            case "$path" in
-              apps/convex-inspect/*|crates/convex-sync-core/*|Cargo.toml|Cargo.lock|rust-toolchain.toml|rustfmt.toml|.depot/workflows/ci.yml)
-                inspect=true
-                ;;
-            esac
-            case "$path" in
-              apps/convex-sync/*|crates/convex-export-s3/*|crates/convex-sync-core/*|Cargo.toml|Cargo.lock|rust-toolchain.toml|rustfmt.toml|.depot/workflows/ci.yml)
-                sync=true
-                ;;
-            esac
-          done < <(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD)
-
-          echo "inspect=${inspect}" >> "$GITHUB_OUTPUT"
-          echo "sync=${sync}" >> "$GITHUB_OUTPUT"
-
-  fmt:
-    name: 02-rustfmt
-    runs-on: depot-ubuntu-24.04 # was: ubuntu-24.04. Mapped standard GitHub runner to Depot equivalent.
-    steps:
-      - uses: actions/checkout@v4
+      - name: Setup Depot
+        uses: depot/setup-action@v1
+      - name: Install sccache
+        run: sudo apt-get update && sudo apt-get install -y sccache
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
         with:
-          components: rustfmt
+          components: clippy, rustfmt
+      - name: Verify toolchain selection
+        run: |
+          rustup show active-toolchain
+          rustc --version
+          cargo --version
       - name: Run rustfmt
         run: cargo fmt --all --check
-  clippy-inspect:
-    name: 03-clippy-inspect
-    needs: changes
-    if: needs.changes.outputs.inspect == 'true'
-    runs-on: depot-ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Depot
-        uses: depot/setup-action@v1
-      - name: Install sccache
-        run: sudo apt-get update && sudo apt-get install -y sccache
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
       - name: Run clippy
-        run: depot cargo clippy -p convex-sync-core -p convex-inspect --all-targets --all-features -- -D warnings
-  test-inspect:
-    name: 04-test-inspect
-    needs: changes
-    if: needs.changes.outputs.inspect == 'true'
-    runs-on: depot-ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Depot
-        uses: depot/setup-action@v1
-      - name: Install sccache
-        run: sudo apt-get update && sudo apt-get install -y sccache
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        run: depot cargo clippy --workspace --locked --all-targets --all-features -- -D warnings
       - name: Run tests
-        run: depot cargo test -p convex-sync-core -p convex-inspect
-  clippy-sync:
-    name: 05-clippy-sync
-    needs: changes
-    if: needs.changes.outputs.sync == 'true'
-    runs-on: depot-ubuntu-latest-4
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Depot
-        uses: depot/setup-action@v1
-      - name: Install sccache
-        run: sudo apt-get update && sudo apt-get install -y sccache
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - name: Run clippy
-        run: depot cargo clippy -p convex-export-s3 -p convex-sync --all-targets --all-features -- -D warnings
-  test-sync:
-    name: 06-test-sync
-    needs: changes
-    if: needs.changes.outputs.sync == 'true'
-    runs-on: depot-ubuntu-latest-4
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Depot
-        uses: depot/setup-action@v1
-      - name: Install sccache
-        run: sudo apt-get update && sudo apt-get install -y sccache
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Run tests
-        run: depot cargo test -p convex-export-s3 -p convex-sync
+        run: depot cargo test --workspace --locked
+      - name: Build CLI entrypoints
+        run: depot cargo build --workspace --locked
+      - name: Exercise CLI and S3 behavior against local fixtures
+        run: python3 scripts/test-runtime.py

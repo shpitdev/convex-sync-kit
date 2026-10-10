@@ -178,10 +178,17 @@ Examples in this repo often use `.memory/` because that is convenient for local 
 
 | Layer | Present | Tooling | Runs in CI |
 |---|---|---|---|
-| unit | yes | `cargo test --workspace` | yes |
-| integration | no | `none` | no |
+| unit | yes | `cargo test --workspace --locked` | yes |
+| integration | yes | `scripts/test-runtime.py` runs both CLIs against local Convex/S3 fixtures | yes |
 | e2e api | no | `none` | no |
 | e2e web | no | `none` | no |
+
+Run `just verify` with Rust 1.95.0 (selected by `rust-toolchain.toml`),
+Python 3, and just. CI uses the same pinned Rust version and locked dependency
+graph for formatting, Clippy, tests, and executable fixture checks in one job.
+The fixtures cover snapshot/resume/delete, incremental Parquet staging, S3
+publishing, and failed manifest reads. They do not verify live Convex, AWS, or
+Databricks credentials, permissions, or deployments.
 
 Remote automation:
 

@@ -7,13 +7,13 @@ install-hooks:
   chmod +x .githooks/pre-commit
 
 build-inspect:
-  cargo build -p convex-inspect
+  cargo build --locked -p convex-inspect
 
 build-cli:
-  cargo build -p convex-sync
+  cargo build --locked -p convex-sync
 
 build-cli-release:
-  cargo build -p convex-sync --release --locked
+  cargo build --locked -p convex-sync --release
 
 fmt:
   cargo fmt --all
@@ -22,15 +22,19 @@ fmt-check:
   cargo fmt --all --check
 
 check:
-  cargo check --workspace
+  cargo check --workspace --locked
 
 test:
-  cargo test --workspace
+  cargo test --workspace --locked
 
 clippy:
-  cargo clippy --workspace --all-targets --all-features -- -D warnings
+  cargo clippy --workspace --locked --all-targets --all-features -- -D warnings
 
-verify: fmt-check clippy test
+runtime-test:
+  cargo build --workspace --locked
+  python3 scripts/test-runtime.py
+
+verify: fmt-check clippy test runtime-test
 
 # CI
 depot-ci *args:

@@ -38,7 +38,7 @@ fi
 
 (
   cd "${repo_root}"
-  CONVEX_SYNC_VERSION="${version_label}" cargo build -p convex-sync --quiet
+  CONVEX_SYNC_VERSION="${version_label}" cargo build --locked -p convex-sync --quiet
 )
 
 reported_version="$("${binary_path}" --version 2>/dev/null | awk '{print $2}')"
